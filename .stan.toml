@@ -1,0 +1,14 @@
+[[remove]]
+directory = "test\\"
+
+# big tuples
+[[check]]
+type = "Exclude"
+id = "STAN-0302"
+file = "src\\Utils\\TypeLevel.hs" 
+
+# big tuples
+[[check]]
+type = "Exclude"
+id = "STAN-0302"
+file = "src\\Utils\\AsMaybe.hs" 

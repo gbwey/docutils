@@ -1,0 +1,7 @@
+cradle:
+  stack:
+    - path: "./src"
+      component: "docutils:lib"
+
+    - path: "./test"
+      component: "docutils:test:docutils-test"

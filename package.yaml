@@ -1,0 +1,69 @@
+name:                docutils
+version:             0.1.0.0
+#synopsis:
+#description:
+homepage:            https://github.com/gbwey/docutils#readme
+license:             BSD3
+copyright:           2018 Grant Weyburne
+category:            General
+extra-source-files:
+- README.md
+
+dependencies:
+- base >= 4.7 && < 5
+- clock
+- containers
+- coreutils
+- extra
+# - generics
+- generic-lens
+- lens
+- megaparsec
+- prettyprinter
+- pretty-simple
+- semigroupoids
+- text
+- these
+- time
+- validation-selective
+- witherable
+
+library:
+  source-dirs: src
+  ghc-options:
+  - -Wall
+  - -Wcompat
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wpartial-fields
+  - -Wunused-type-patterns
+  - -Wredundant-constraints
+  - -Wmonomorphism-restriction
+  - -Wmissing-deriving-strategies
+  - -Wmissing-local-signatures
+  - -Widentities
+  - -Wmissing-export-lists
+tests:
+  docutils-test:
+    main:                Main.hs
+    source-dirs:
+#    - src
+    - test
+    ghc-options:
+    - -Wall
+    - -Wcompat
+    - -Wincomplete-record-updates
+    - -Wincomplete-uni-patterns
+    - -Wpartial-fields
+    - -Wunused-type-patterns
+    - -Wredundant-constraints
+    - -Wmissing-deriving-strategies
+    - -Widentities
+    - -Wno-missing-export-lists
+    - -Wno-missing-local-signatures
+    dependencies:
+    - base
+    - docutils
+    - shakespeare
+    - tasty
+    - tasty-hunit

@@ -1,0 +1,89 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 3b409c18080f7af94dcd77d012782b53a7b0ca490c7755a0064dd068206d4df5
+
+name:           docutils
+version:        0.1.0.0
+category:       General
+homepage:       https://github.com/gbwey/docutils#readme
+copyright:      2018 Grant Weyburne
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+
+library
+  exposed-modules:
+      DocUtils.Condition
+      DocUtils.Divvy
+      DocUtils.Doc
+      DocUtils.Generics
+      DocUtils.Parser
+      DocUtils.Time
+      DocUtils.Witherable
+  other-modules:
+      Paths_docutils
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wunused-type-patterns -Wredundant-constraints -Wmonomorphism-restriction -Wmissing-deriving-strategies -Wmissing-local-signatures -Widentities -Wmissing-export-lists
+  build-depends:
+      base >=4.7 && <5
+    , clock
+    , containers
+    , coreutils
+    , extra
+    , generic-lens
+    , lens
+    , megaparsec
+    , pretty-simple
+    , prettyprinter
+    , semigroupoids
+    , text
+    , these
+    , time
+    , validation-selective
+    , witherable
+  default-language: Haskell2010
+
+test-suite docutils-test
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  other-modules:
+      GenCode
+      TestCondition
+      TestDivvy
+      TestDoc
+      TestGenerics
+      TestParser
+      TestTime
+      Paths_docutils
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wunused-type-patterns -Wredundant-constraints -Wmissing-deriving-strategies -Widentities -Wno-missing-export-lists -Wno-missing-local-signatures
+  build-depends:
+      base
+    , clock
+    , containers
+    , coreutils
+    , docutils
+    , extra
+    , generic-lens
+    , lens
+    , megaparsec
+    , pretty-simple
+    , prettyprinter
+    , semigroupoids
+    , shakespeare
+    , tasty
+    , tasty-hunit
+    , text
+    , these
+    , time
+    , validation-selective
+    , witherable
+  default-language: Haskell2010

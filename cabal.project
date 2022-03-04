@@ -1,0 +1,3 @@
+packages: *.cabal ../{coreutils}
+
+tests: True
