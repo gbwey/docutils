@@ -6,20 +6,21 @@
 module GenCode where
 
 import Data.Bool
-import Data.Foldable
 import qualified Data.List as L
+import qualified Data.List.NonEmpty as N
+import Data.Pos
 import Data.Semigroup.Foldable
 import Data.Text (Text)
 import qualified Data.Text as T
 import DocUtils.Doc
+import Primus.Error
+import Primus.Fold
+import Primus.NonEmpty
 import Text.Shakespeare.Text
-import Utils.Fold
-import Utils.NonEmpty
-import Utils.Positive
 
--- mapM_ (putStrLn . genListTupleC) (positiveRange' 2 20) -- to generate from two onwards
-genListTupleC :: Positive -> String
-genListTupleC (unPositive -> n)
+-- mapM_ (putStrLn . genListTupleC) (fr $ posRange 2 20) -- to generate from two onwards
+genListTupleC :: Pos -> String
+genListTupleC (Pos n)
   | n == 1 = error "genListTupleC: special case using One: you're own your own"
   | otherwise =
       let s1 = L.foldr (\_ z -> wrapParens (" 'SS " ++ z)) "'SZ" [1 .. n - 1]
@@ -39,9 +40,9 @@ genListTupleC (unPositive -> n)
   fromTupleC (#{s3}) = #{s2}
   traversalTupleC afa (#{s3}) = #{s4}|]
 
--- mapM_ (putStrLn . genTupleZ) (positiveRange' 2 20) -- to generate from two onwards
-genTupleZ :: Positive -> String
-genTupleZ (unPositive -> n)
+-- mapM_ (putStrLn . genTupleZ) (fr $ posRange 2 20) -- to generate from two onwards
+genTupleZ :: Pos -> String
+genTupleZ (Pos n)
   | n == 1 = error "genTupleZ: special case using One: you're own your own"
   | otherwise =
       let s1 = "N" ++ show n
@@ -69,24 +70,24 @@ instance (a ~ a1, a ~ a2, a ~ a3, a ~ a4, a ~ a5, a ~ a6, a ~ a7, a ~ a8, a ~ a9
 --  traversalTupleC afa (a1,a2,a3) = (,,) <$> afa a1 <*> afb a2 <*> afb a3
 
 -- for Peano.hs
-genN :: Positive -> String
-genN (unPositive -> n) = T.unpack [st|type N#{n} = |] <> pFoldL (\_ post z _ -> bool wrapParens id (null post) (" 'SS " ++ z)) "'SZ" [1 .. n - 1]
+genN :: Pos -> String
+genN (Pos n) = T.unpack [st|type N#{n} = |] <> pFoldL (\_ post z _ -> bool wrapParens id (null post) (" 'SS " ++ z)) "'SZ" [1 .. n - 1]
 
 -- for Fin.hs
-genFin :: Positive -> String
-genFin (unPositive -> n) =
+genFin :: Pos -> String
+genFin (Pos n) =
   let a = T.unpack [st|_F#{n} :: Fin |] <> wrapParens (pFoldL (\_ post z _ -> bool wrapParens id (null post) (" 'SS " ++ z)) "n" [1 .. n - 1])
       b = T.unpack [st|_F#{n} = |] <> pFoldL (\_ post z _ -> bool wrapParens id (null post) ("FS " ++ z)) "FZ" [1 .. n - 1]
    in L.unlines [a, b]
 
--- mapM_ (putStrLn . genListTupleT) (positiveRange' 2 20) -- to generate from two onwards
+-- mapM_ (putStrLn . genListTupleT) (fr $ posRange 2 20) -- to generate from two onwards
 -- for ListF.hs
-genListTupleT :: Positive -> String
+genListTupleT :: Pos -> String
 genListTupleT p
   | p == _1P = error "genListTupleT: special case using One"
   | otherwise =
       let s2 = intercalate1 "," $ replicate1 @String p "a"
-       in T.unpack [st|  ListTupleT N#{unPositive p} a = (#{s2})|]
+       in T.unpack [st|  ListTupleT N#{unP p} a = (#{s2})|]
 
 genMatrixListC :: Int -> T.Text
 genMatrixListC n =
@@ -120,25 +121,25 @@ ituples n = L.foldr (\i z -> wrapParens ("a" ++ show i ++ ", " ++ z)) "()" [1 ..
 flattuples :: Int -> String
 flattuples n = L.intercalate ", " $ map (('a' :) . show) [1 .. n]
 
--- mapM_ (putStrLn . genToITupleT) (positiveRange' 2 10) -- to generate from two onwards
-genToITupleT :: Positive -> String
-genToITupleT (unPositive -> n)
+-- mapM_ (putStrLn . genToITupleT) (fr $ posRange 2 10) -- to generate from two onwards
+genToITupleT :: Pos -> String
+genToITupleT (Pos n)
   | n == 1 = error "genToITupleT: special case using One: you're own your own"
   | otherwise =
       T.unpack
         [st|  ToITupleT (#{flattuples n}) = #{ituples n}|]
 
--- mapM_ (putStrLn . genFromITupleT) (positiveRange' 2 10) -- to generate from two onwards
-genFromITupleT :: Positive -> String
-genFromITupleT (unPositive -> n)
+-- mapM_ (putStrLn . genFromITupleT) (fr $ posRange 2 10) -- to generate from two onwards
+genFromITupleT :: Pos -> String
+genFromITupleT (Pos n)
   | n == 1 = error "genFromITupleT: special case using One: you're own your own"
   | otherwise =
       T.unpack
         [st|  FromITupleT #{ituples n} = (#{flattuples n})|]
 
--- mapM_ (putStrLn . genToITupleC) (positiveRange' 2 10) -- to generate from two onwards
-genITupleC :: Positive -> String
-genITupleC (unPositive -> n)
+-- mapM_ (putStrLn . genToITupleC) (fr $ posRange 2 10) -- to generate from two onwards
+genITupleC :: Pos -> String
+genITupleC (Pos n)
   | n == 1 = error "genToITupleT: special case using One: you're own your own"
   | otherwise =
       T.unpack
@@ -146,10 +147,9 @@ genITupleC (unPositive -> n)
   toITupleC (#{flattuples n}) = #{ituples n}
   fromITupleC #{ituples n} = (#{flattuples n})|]
 
-genITupleAll :: Positive -> String
-genITupleAll n =
-  let xs = toList $ positiveRange' 2 (unPositive n)
-
+genITupleAll :: Pos -> String
+genITupleAll (Pos n) =
+  let xs = N.toList $ fr $ posRange 2 n
       a1 =
         T.unpack
           [st|type ToITupleT :: Type -> Type
@@ -158,7 +158,6 @@ type family ToITupleT x = result | result -> x where
 |]
 
       a2 = unlines $ map genToITupleT xs
-
       b1 =
         T.unpack
           [st|type FromITupleT :: Type -> Type
@@ -167,7 +166,6 @@ type family FromITupleT x = result | result -> x where
 |]
 
       b2 = unlines $ map genFromITupleT xs
-
       c1 =
         T.unpack
           [st|type ITupleC :: Type -> Constraint

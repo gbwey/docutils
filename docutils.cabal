@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3b409c18080f7af94dcd77d012782b53a7b0ca490c7755a0064dd068206d4df5
+-- hash: 02f37093cd0dce73583e2a6bfd04af30c815e1a1d2f166c8cce1eed49ba9a970
 
 name:           docutils
 version:        0.1.0.0
@@ -14,8 +14,6 @@ copyright:      2018 Grant Weyburne
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
-extra-source-files:
-    README.md
 
 library
   exposed-modules:
@@ -35,13 +33,14 @@ library
       base >=4.7 && <5
     , clock
     , containers
-    , coreutils
     , extra
     , generic-lens
-    , lens
     , megaparsec
+    , parser-combinators
+    , pos >=0.2.0.0
     , pretty-simple
     , prettyprinter
+    , primus
     , semigroupoids
     , text
     , these
@@ -69,14 +68,16 @@ test-suite docutils-test
       base
     , clock
     , containers
-    , coreutils
     , docutils
     , extra
     , generic-lens
     , lens
     , megaparsec
+    , parser-combinators
+    , pos >=0.2.0.0
     , pretty-simple
     , prettyprinter
+    , primus
     , semigroupoids
     , shakespeare
     , tasty

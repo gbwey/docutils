@@ -1,3 +1,3 @@
-packages: *.cabal ../{coreutils}
-
+packages: *.cabal ../{pos,primus}
+-- packages: *.cabal 
 tests: True

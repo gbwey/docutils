@@ -39,8 +39,8 @@ module DocUtils.Condition (
   expectAscending',
   isSequence,
   isSequence',
-  expectLeftWithT,
-  expectLeftWith,
+  expectLeftWords,
+  expectLeftInfix,
   expectNoDupsBy,
   expectTheseOne,
   toLeftF,
@@ -58,12 +58,14 @@ module DocUtils.Condition (
 import Control.Applicative
 import Control.Arrow
 import qualified Control.Exception as E
+import Data.Char
 import Data.Containers.ListUtils (nubOrd)
 import Data.Either
 import Data.Foldable
 import qualified Data.List as L
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as N
+import Data.Pos
 import Data.Semigroup.Foldable
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -71,11 +73,10 @@ import Data.These
 import DocUtils.Doc
 import GHC.Generics (Generic)
 import GHC.Stack
-import Utils.Error
-import Utils.List
-import Utils.NonEmpty
-import Utils.Positive
-import Utils.ZipNonEmpty
+import Primus.Error
+import Primus.List
+import Primus.NonEmpty
+import Primus.ZipNonEmpty
 import Validation
 
 -- | type synonym holding the result of the validation
@@ -124,7 +125,7 @@ data ConditionType
   | ExpectAllEqualLength
   deriving stock (Show, Eq, Generic, Enum, Bounded)
 
--- | holds a non empty list of validation errors
+-- | holds a nonempty list of validation errors
 data ConditionErrors' = ConditionErrors'
   { cesErrors :: !(NonEmpty (ConditionType, Text))
   , cesCallStack :: !Text
@@ -362,16 +363,24 @@ isSequence' ta =
     [] -> Just ta
     i : _ -> isSequence i ta
 
--- | expect a 'Left' with the text matching infix with "ns" but using 'Text' instead of String
-expectLeftWithT :: Show a => NonEmpty String -> Either Text a -> Either String ()
-expectLeftWithT xs = expectLeftWith xs . left T.unpack
+-- | expect a 'Left' with the text matching infix with "ns"
+expectLeftWords :: Show a => NonEmpty String -> Either String a -> Either String ()
+expectLeftWords ns0 = \case
+  Right a -> Left $ "expected fail but was actually successful " ++ show a
+  Left s0 ->
+    let g x = L.words $ map (\c -> if isPunctuation c || c == '=' then ' ' else c) x
+        ns = concatMap g (N.toList ns0)
+        s = g s0
+     in if all (`L.elem` s) ns
+          then Right ()
+          else Left $ "found Left but not all the strings matched: [[" ++ s0 ++ "]] words[[" ++ L.intercalate " | " s ++ "]] ns[[" ++ L.intercalate " | " ns ++ "]]"
 
 -- | expect a 'Left' with the text matching infix with "ns"
-expectLeftWith :: Show a => NonEmpty String -> Either String a -> Either String ()
-expectLeftWith _ (Right a) = Left $ "expected fail but was actually successful " ++ show a
-expectLeftWith ns (Left s)
+expectLeftInfix :: Show a => NonEmpty String -> Either String a -> Either String ()
+expectLeftInfix _ (Right a) = Left $ "expected fail but was actually successful " ++ show a
+expectLeftInfix ns (Left s)
   | all (`L.isInfixOf` s) ns = Right ()
-  | otherwise = Left $ "found fail but infix string did not match: actual[" ++ s ++ "] infix[" ++ psiS ns ++ "]"
+  | otherwise = Left $ "found fail but infix string did not match: actual[" ++ s ++ "] infix[" ++ show ns ++ "]"
 
 -- | looks for duplicates by "f" and if none found returns the original values
 expectNoDupsBy :: (Show a, Show c, Ord c) => Condition -> Text -> (a -> c) -> [a] -> VE [a]
@@ -497,11 +506,19 @@ expectAllEqualBy pp errmsg f = go
 -- gets the minimum size of all the lists using ZipNonEmpty: if at least one is finite then it will work or if only one value
 -- if all are infinite and more than one entry then will hang
 
--- | checks that all the non empty containers are of the same size and returns that size
-expectLengthAllEqual1 :: Foldable1 t => Condition -> Text -> NonEmpty (t a) -> VE Positive
+-- | checks that all the nonempty containers are of the same size and returns that size
+expectLengthAllEqual1 :: forall t a. Foldable1 t => Condition -> Text -> NonEmpty (t a) -> VE Pos
 expectLengthAllEqual1 pp errmsg ns = do
-  let minlen = lengthPositive $ unZipNonEmpty $ N.head $ sequenceA $ traverse (ZipNonEmpty . toNonEmpty) ns
-  case partitionEithers $ N.toList $ N.zipWith (\i x -> lmsg ("index=" ++ show i) $ lengthExact1 minlen (toNonEmpty x)) (0 :| [1 :: Int ..]) ns of
+  let minlen =
+        lengthP $
+          unZipNonEmpty $
+            N.head $
+              sequenceA $
+                traverse (ZipNonEmpty . toNonEmpty) ns
+      f :: Int -> t a -> Either String (NonEmpty a)
+      f i x = lmsg ("index=" ++ show i) $ lengthExact1 minlen (toNonEmpty x)
+      zs = N.zipWith f (0 :| [1 :: Int ..]) ns
+  case partitionEithers $ N.toList zs of
     ([], _) -> pure minlen
     (es@(_ : _), _) ->
       failure $
@@ -511,7 +528,7 @@ expectLengthAllEqual1 pp errmsg ns = do
             <> "\n"
             <> psiT es
             <> " minlen="
-            <> T.pack (show (unPositive minlen))
+            <> T.pack (show (unP minlen))
             <> " "
             <> errmsg
 

@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -11,6 +12,16 @@ Copyright   : (c) Grant Weyburne, 2022
 License     : BSD-3
 -}
 module DocUtils.Parser (
+  -- * core types and methods
+  ZParser,
+  runP,
+  runP',
+  runReadP,
+  zfail,
+
+  -- * parsers
+  parsePosP,
+  parsePositives1P,
   parseDurationP,
   rangeP,
   utcTimeP,
@@ -19,7 +30,7 @@ module DocUtils.Parser (
   parseTimeAll,
   parseIntRanges,
   parseIntRangeP,
-  intP,
+  intZ,
   floatZ,
   theseP,
 ) where
@@ -27,26 +38,69 @@ module DocUtils.Parser (
 import Control.Applicative
 import Control.Arrow
 import Control.Monad
+import qualified Control.Monad.Combinators.NonEmpty as ZN
 import Data.Char
 import qualified Data.List.Extra as LE
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.List.NonEmpty as N
 import Data.Maybe
+import Data.Pos
+import Data.Text (Text)
 import qualified Data.Text as T
 import Data.These
 import Data.These.Combinators
 import Data.Time
 import Data.Time.Format.ISO8601
+import Data.Void
 import DocUtils.Time
+import Primus.Error
+import Primus.NonEmpty
 import Text.Megaparsec ((<?>))
 import qualified Text.Megaparsec as Z
 import qualified Text.Megaparsec.Char as Z
 import qualified Text.Megaparsec.Char.Lexer as ZL
 import Text.Read (readMaybe)
-import Utils.Error
-import Utils.NonEmpty
-import Utils.Parser
-import Utils.Positive
+
+{-# INLINE runP #-}
+
+-- | convenience for parsing a text
+runP :: ZParser a -> Text -> Either String a
+runP p = left Z.errorBundlePretty . Z.runParser p "??"
+
+-- | similar to 'runP' but also returns leftovers
+runP' :: ZParser a -> Text -> Either String (a, Text)
+runP' p = left Z.errorBundlePretty . Z.runParser q "??"
+ where
+  q = liftM2 (,) p Z.getInput
+{-# INLINE runP' #-}
+
+-- | more read instance friendly: String instead of Text based and strips leading spaces before parsing
+runReadP :: ZParser a -> String -> Either String (a, String)
+runReadP p = right (second T.unpack) . runP' p . T.stripStart . T.pack
+{-# INLINE runReadP #-}
+
+-- | type synonym for the parser return type
+type ZParser = Z.Parsec Void Text
+
+-- | force a parser failure with an errormessage
+{-# INLINE zfail #-}
+zfail :: Z.MonadParsec e s m => String -> m a
+zfail = \case
+  [] -> Z.failure Nothing mempty
+  c : cs -> Z.failure (Just (Z.Label (c :| cs))) mempty
+
+-- | parser for a 'Pos'
+parsePosP :: ZParser Pos
+parsePosP = do
+  nm <- ZL.decimal
+  case eitherPos nm of
+    Left e -> zfail $ "parsePosP value <= 0 nm=" ++ show nm ++ " e=" ++ e
+    Right ret -> pure ret
+
+-- | parser for a nonempty list of 'Pos'
+parsePositives1P :: (ZParser a, ZParser b) -> ZParser (NonEmpty Pos)
+parsePositives1P (o, c) =
+  Z.between o c (ZN.sepBy1 parsePosP (Z.char ','))
 
 -- | parse duration
 parseDurationP :: ZParser HHMMSSDD
@@ -59,11 +113,11 @@ parseDurationP = do
   return HHMMSSDD{..}
 
 -- | parse "n" digits and checks that value is between "s" and "e"
-rangeP :: (Show a, Ord a, Read a) => String -> Positive -> (a, a) -> ZParser a
-rangeP msg' n (s, e)
+rangeP :: (Show a, Ord a, Read a) => String -> Pos -> (a, a) -> ZParser a
+rangeP msg' (Pos n) (s, e)
   | s > e = zfail $ msg "start is greater than end! " <> show (s, e)
   | otherwise = do
-      x <- Z.count (unPositive n) Z.digitChar <?> msg "invalid digits"
+      x <- Z.count n Z.digitChar <?> msg "invalid digits"
       case readMaybe x of
         Nothing -> zfail $ msg "failed to read x=[" <> x <> "]"
         Just i
@@ -144,7 +198,7 @@ parseTimeAll s =
 
 -- | parse a set of ranges using 'parseIntRangeP'
 parseIntRanges :: String -> Either String (NonEmpty (NonEmpty Int))
-parseIntRanges s = left T.unpack $ do
+parseIntRanges s = do
   let xs = LE.wordsBy (\c -> not (isDigit c || c == '.' || c == '-')) s
   yss <- mapM (runP parseIntRangeP . T.pack) xs
   case yss of
@@ -174,12 +228,12 @@ parseIntRangeP =
   msg = ("parseIntRangeP:" <>)
 
 -- | parses "n" digits
-{-# INLINE intP #-}
-intP :: Read a => Int -> ZParser a
-intP n = do
+{-# INLINE intZ #-}
+intZ :: Read a => Int -> ZParser a
+intZ n = do
   x <- Z.count n Z.digitChar <?> "invalid digits"
   case readMaybe x of
-    Nothing -> zfail $ "intP: failed to read x=[" <> x <> "]"
+    Nothing -> zfail $ "intZ: failed to read x=[" <> x <> "]"
     Just i -> return i
 
 -- | parser for a 'Float'
@@ -187,7 +241,7 @@ intP n = do
 floatZ :: ZParser (Int, Double)
 floatZ = do
   ret <- (<>) <$> some Z.digitChar <*> ((:) <$> Z.char '.' <*> some Z.digitChar <|> mempty)
-  return $ properFraction $ fromMaybe (programmerError "floatZ: read failed") $ readMaybe ret
+  return $ properFraction $ fromMaybe (programmError "floatZ: read failed") $ readMaybe ret
 
 -- | 'These' for parsers so we can trace where the parse originated
 {-# INLINE theseP #-}

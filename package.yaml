@@ -6,19 +6,18 @@ homepage:            https://github.com/gbwey/docutils#readme
 license:             BSD3
 copyright:           2018 Grant Weyburne
 category:            General
-extra-source-files:
-- README.md
 
 dependencies:
 - base >= 4.7 && < 5
 - clock
 - containers
-- coreutils
+- pos >= 0.2.0.0
+- primus
 - extra
 # - generics
 - generic-lens
-- lens
 - megaparsec
+- parser-combinators
 - prettyprinter
 - pretty-simple
 - semigroupoids
@@ -64,6 +63,7 @@ tests:
     dependencies:
     - base
     - docutils
+    - lens
     - shakespeare
     - tasty
     - tasty-hunit

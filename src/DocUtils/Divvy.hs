@@ -16,13 +16,11 @@ module DocUtils.Divvy (
   divvyKeyed,
   --  mapEachPiece,
   --  divvyKeyedInternal,
-  argIso,
   --  unArg,
   --  reArg,
 ) where
 
 import Control.Arrow
-import Control.Lens
 import Data.List.NonEmpty (NonEmpty (..))
 import qualified Data.Map.Merge.Strict as MS
 import Data.Map.Strict (Map)
@@ -32,8 +30,8 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.These
 import GHC.Stack
-import Utils.Error
-import Utils.NonEmpty
+import Primus.Error
+import Primus.NonEmpty
 
 -- | compares 2 lists based on a comparator but unwraps 'Arg'
 divvyKeyed ::
@@ -100,7 +98,7 @@ divvyKeyedInternal ax bx tp1 tp2 =
               ( \th th1 -> case (th, th1) of
                   (This a, That b) -> These a b
                   (That b, This a) -> These a b
-                  _other -> programmerError "cant happen as we have passed in Sets so no duplicates"
+                  _other -> programmError "cant happen as we have passed in Sets so no duplicates"
               )
           )
           m1
@@ -110,10 +108,6 @@ divvyKeyedInternal ax bx tp1 tp2 =
  where
   g :: forall f. Applicative f => (Arg w a, Arg w b) -> (Ordering, f (Arg w a, Arg w b))
   g z@(Arg a _, Arg a' _) = (compare a a', pure z)
-
--- | iso from 'Arg' to a tuple
-argIso :: Iso (Arg a b) (Arg a' b') (b, a) (b', a')
-argIso = iso unArg reArg
 
 -- | unwrap 'Arg' into a tuple
 {-# INLINE unArg #-}

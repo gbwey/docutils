@@ -70,7 +70,7 @@ import qualified Data.Time.Format.Internal as TI
 import Data.Typeable
 import DocUtils.Time
 import GHC.Generics
-import Utils.Error (normalError)
+import Primus.Error (normalError)
 
 import Data.List.NonEmpty (NonEmpty (..))
 
