@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 02f37093cd0dce73583e2a6bfd04af30c815e1a1d2f166c8cce1eed49ba9a970
+-- hash: 6cb2d685e59ac5c150cb37d6cea9a1726b284b3fdef243686d74e0986a517532
 
 name:           docutils
 version:        0.1.0.0
@@ -37,7 +37,7 @@ library
     , generic-lens
     , megaparsec
     , parser-combinators
-    , pos >=0.2.0.0
+    , pos >=0.3.0.0
     , pretty-simple
     , prettyprinter
     , primus
@@ -74,7 +74,7 @@ test-suite docutils-test
     , lens
     , megaparsec
     , parser-combinators
-    , pos >=0.2.0.0
+    , pos >=0.3.0.0
     , pretty-simple
     , prettyprinter
     , primus
