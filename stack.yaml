@@ -4,6 +4,7 @@ packages:
 - .
 
 extra-deps:
+- ../baseutils
 - ../pos
 - ../primus
 # - pos-0.3.0.0

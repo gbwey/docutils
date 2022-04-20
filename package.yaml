@@ -9,6 +9,7 @@ category:            General
 
 dependencies:
 - base >= 4.7 && < 5
+- baseutils
 - clock
 - containers
 - pos >= 0.3.0.0
@@ -24,6 +25,7 @@ dependencies:
 - text
 - these
 - time
+- unliftio
 - validation-selective
 - witherable
 

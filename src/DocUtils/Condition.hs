@@ -15,6 +15,7 @@ License     : BSD-3
 -}
 module DocUtils.Condition (
   VE,
+  hoistValidationM,
   ConditionType (..),
   Condition (..),
   ConditionErrors' (..),
@@ -69,6 +70,8 @@ import Data.Pos
 import Data.Semigroup.Foldable
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as TL
+import Control.Monad.IO.Class
 import Data.These
 import DocUtils.Doc
 import GHC.Generics (Generic)
@@ -78,6 +81,9 @@ import Primus.List
 import Primus.NonEmpty
 import Primus.ZipNonEmpty
 import Validation
+import qualified UnliftIO.Exception as U
+import Text.Pretty.Simple
+import BaseUtils.Extra
 
 -- | type synonym holding the result of the validation
 type VE a = Validation (NonEmpty (ConditionType, Text)) a
@@ -85,6 +91,18 @@ type VE a = Validation (NonEmpty (ConditionType, Text)) a
 -- | pretty print the validation results
 prtV :: (Show e, Show a) => Validation e a -> IO ()
 prtV = putStrLn . validation psiS psiS
+
+-- | lift a 'V.Validation' to an exception
+{-# INLINE hoistValidationM #-}
+hoistValidationM ::
+  (HasCallStack, MonadIO m, Show e) =>
+  Text ->
+  Validation e a ->
+  m a
+hoistValidationM txt =
+  validation
+    (U.throwIO . GBException . (txt <>) . TL.toStrict . pShowOpt defaultOutputOptionsNoColor)
+    return
 
 -- | validate that the expected errors match the actual failure and that the error messages match the infix strings
 expectVFailureWith ::
