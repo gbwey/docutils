@@ -56,9 +56,11 @@ module DocUtils.Condition (
   expectLengthAllEqual0,
 ) where
 
+import BaseUtils.Extra
 import Control.Applicative
 import Control.Arrow
 import qualified Control.Exception as E
+import Control.Monad.IO.Class
 import Data.Char
 import Data.Containers.ListUtils (nubOrd)
 import Data.Either
@@ -71,7 +73,6 @@ import Data.Semigroup.Foldable
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
-import Control.Monad.IO.Class
 import Data.These
 import DocUtils.Doc
 import GHC.Generics (Generic)
@@ -80,10 +81,9 @@ import Primus.Error
 import Primus.List
 import Primus.NonEmpty
 import Primus.ZipNonEmpty
-import Validation
-import qualified UnliftIO.Exception as U
 import Text.Pretty.Simple
-import BaseUtils.Extra
+import qualified UnliftIO.Exception as U
+import Validation
 
 -- | type synonym holding the result of the validation
 type VE a = Validation (NonEmpty (ConditionType, Text)) a

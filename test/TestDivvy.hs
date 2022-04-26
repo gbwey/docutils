@@ -20,18 +20,18 @@ suite =
           @?= ( Set.fromList [('a', 100)]
               , Set.fromList [('c', 12)]
               , M.fromList
-                [ (LT, (('b', 200), ('b', 201)) :| [])
-                , (EQ, (('x', 11), ('x', 11)) :| [])
-                ]
+                  [ (LT, (('b', 200), ('b', 201)) :| [])
+                  , (EQ, (('x', 11), ('x', 11)) :| [])
+                  ]
               )
     , testCase "divvyKeyed" $
         divvyKeyed id toLower [('a', 100 :: Int), ('b', 200), ('x', 11)] [('C', 12), ('B', 201), ('X', 11)]
           @?= ( Set.fromList [('a', 100)]
               , Set.fromList [('C', 12)]
               , M.fromList
-                [ (LT, (('b', 200), ('B', 201)) :| [])
-                , (EQ, (('x', 11), ('X', 11)) :| [])
-                ]
+                  [ (LT, (('b', 200), ('B', 201)) :| [])
+                  , (EQ, (('x', 11), ('X', 11)) :| [])
+                  ]
               )
     , testCase "divvyKeyed" $
         divvyKeyed id id [('a', 100 :: Int), ('b', 200), ('x', 11)] [('C', 12), ('B', 201), ('X', 11)]
